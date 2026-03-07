@@ -12,7 +12,6 @@ import {
   Clock, 
   IceCream,
   ChevronRight,
-  RefreshCw,
   X,
   Copy,
   Check,
@@ -332,13 +331,17 @@ export default function App() {
     <div className="min-h-screen bg-[#f5f2ed] text-[#1a1a1a] font-sans selection:bg-emerald-100">
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 h-20 bg-white/80 backdrop-blur-md border-b border-black/5 z-50 flex items-center justify-between px-6 lg:px-12">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center text-white shadow-lg shadow-emerald-200">
+        <div 
+          onClick={resetChat}
+          className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity shrink-0"
+          title={t.reset}
+        >
+          <div className="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center text-white shadow-lg shadow-emerald-200 shrink-0">
             <UtensilsCrossed size={20} />
           </div>
-          <div>
-            <h1 className="text-xl font-semibold tracking-tight">EAT Kitchen</h1>
-            <p className="text-xs text-emerald-600 font-medium uppercase tracking-widest">AI Concierge</p>
+          <div className="whitespace-nowrap">
+            <h1 className="text-xl font-semibold tracking-tight leading-none">EAT Kitchen</h1>
+            <p className="text-[10px] text-emerald-600 font-medium uppercase tracking-widest mt-0.5">AI Concierge</p>
           </div>
         </div>
         
@@ -377,14 +380,6 @@ export default function App() {
             title="Sobre o Concierge"
           >
             <Info size={20} />
-          </button>
-
-          <button 
-            onClick={resetChat}
-            className="p-2 hover:bg-black/5 rounded-full transition-colors text-slate-400 hover:text-slate-600"
-            title={t.reset}
-          >
-            <RefreshCw size={20} />
           </button>
         </div>
       </header>
