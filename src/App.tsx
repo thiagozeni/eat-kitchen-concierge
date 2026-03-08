@@ -40,7 +40,7 @@ const TRANSLATIONS = {
     greeting: 'Oi! 😄 Me conta uma coisa: hoje você está buscando o quê?',
     placeholder: 'Digite sua mensagem...',
     reset: 'Reiniciar conversa',
-    footer: 'EAT Kitchen • Comida que faz bem',
+    footer: 'P E S S O A S .  C O M I D A .  V E R D A D E',
     options: {
       light: 'Algo mais leve',
       protein: 'Algo bem proteico',
@@ -56,7 +56,7 @@ const TRANSLATIONS = {
     greeting: 'Hi! 😄 Tell me something: what are you looking for today?',
     placeholder: 'Type your message...',
     reset: 'Reset conversation',
-    footer: 'EAT Kitchen • Food that feels good',
+    footer: 'P E S S O A S .  C O M I D A .  V E R D A D E',
     options: {
       light: 'Something light',
       protein: 'High protein',
@@ -72,7 +72,7 @@ const TRANSLATIONS = {
     greeting: '¡Hola! 😄 Cuéntame algo: ¿qué estás buscando hoy?',
     placeholder: 'Escribe tu mensaje...',
     reset: 'Reiniciar conversación',
-    footer: 'EAT Kitchen • Comida que hace bien',
+    footer: 'P E S S O A S .  C O M I D A .  V E R D A D E',
     options: {
       light: 'Algo más ligero',
       protein: 'Algo proteico',
@@ -88,7 +88,7 @@ const TRANSLATIONS = {
     greeting: 'Привет! 😄 Расскажите мне: что вы ищете сегодня?',
     placeholder: 'Введите сообщение...',
     reset: 'Сбросить чат',
-    footer: 'EAT Kitchen • Еда, которая приносит пользу',
+    footer: 'P E S S O A S .  C O M I D A .  V E R D A D E',
     options: {
       light: 'Что-то легкое',
       protein: 'Много белка',
@@ -232,6 +232,10 @@ export default function App() {
     }
   }), []);
 
+  useEffect(() => {
+    document.title = "EAT + KITCHEN AI Concierge";
+  }, []);
+
   const t = TRANSLATIONS[language];
 
   useEffect(() => {
@@ -340,7 +344,7 @@ export default function App() {
             <UtensilsCrossed size={20} />
           </div>
           <div className="whitespace-nowrap">
-            <h1 className="text-xl font-semibold tracking-tight leading-none">EAT Kitchen</h1>
+            <h1 className="text-xl font-semibold tracking-tight leading-none">EAT + KITCHEN</h1>
             <p className="text-[10px] text-emerald-600 font-medium uppercase tracking-widest mt-0.5">AI Concierge</p>
           </div>
         </div>
@@ -579,7 +583,7 @@ export default function App() {
                 <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center mb-4">
                   <Bot size={28} />
                 </div>
-                <h2 className="text-2xl font-bold tracking-tight">EAT Kitchen AI</h2>
+                <h2 className="text-2xl font-bold tracking-tight">EAT + KITCHEN AI</h2>
                 <p className="text-emerald-100 text-sm mt-1">Seu consultor gastronômico inteligente</p>
               </div>
               <div className="p-8 space-y-6">
