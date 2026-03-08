@@ -183,6 +183,21 @@ export default function App() {
   const markdownComponents = React.useMemo(() => ({
     img: ({ node, ...props }: any) => {
       let src = props.src || '';
+      
+      const isLocal = typeof window !== 'undefined' && (
+        window.location.hostname === 'localhost' || 
+        window.location.hostname === '127.0.0.1'
+      );
+
+      if (src.includes('[DISH_IMAGE_BASE]')) {
+        src = src.replace('[DISH_IMAGE_BASE]', isLocal ? '/images/dishes/' : 'https://eat-kitchen-concierge-guimtfy2w-thiagozenis-projects.vercel.app/images/dishes/');
+      }
+      
+      // Double-safety: Prepend Vercel URL for dish images in preview if they are relative
+      if (src.startsWith('/images/dishes/') && !isLocal) {
+        src = `https://eat-kitchen-concierge-guimtfy2w-thiagozenis-projects.vercel.app${src}`;
+      }
+
       const isDropbox = src.includes('dropbox.com');
       const isVideo = src.includes('drive.google.com') || src.endsWith('.mp4') || src.endsWith('.mov');
       
@@ -194,7 +209,9 @@ export default function App() {
         }
       }
 
-      if (!isVideo && src.startsWith('http') && !isDropbox) {
+      const isDishImage = src.includes('images/dishes');
+      
+      if (!isVideo && src.startsWith('http') && !isDropbox && !isDishImage) {
         src = `https://images.weserv.nl/?url=${encodeURIComponent(src)}&w=800&q=80&output=webp&il`;
       }
 

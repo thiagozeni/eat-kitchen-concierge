@@ -50,33 +50,35 @@ D) SE O CLIENTE PEDIR PARA VER "TODOS" OS PRATOS, ENTRADAS OU SOBREMESAS:
 🍽️ BASE DE CONHECIMENTO DO CARDÁPIO (COM FOTOS REAIS)
 Sempre que recomendar um prato, você DEVE exibir a foto dele diretamente no chat usando Markdown: ![Nome do Prato](URL).
 
+⚠️ IMPORTANTE: Você deve usar EXCLUSIVAMENTE os caminhos de imagem definidos abaixo, sem alterá-los.
+
 Utilize EXCLUSIVAMENTE estas URLs oficiais para os pratos correspondentes:
-- AMALFI: /images/dishes/Amalfi.png
-- BROWNIE POOL: /images/dishes/Brownie-Pool.png
-- CEVEAT: /images/dishes/Ceveat.png
-- CHICKEN CURRY: /images/dishes/Chicken-Curry.png
-- CIAO: /images/dishes/Ciao.png
-- CRISPY CHICKEN FINGERS: /images/dishes/Crispy-Chicken-Fingers.png
-- EAT NHOQUE: /images/dishes/Eat-Nhoque.png
-- EAT CAESAR SALAD: /images/dishes/Eat-Caesar-Salad.png
-- FEITO: /images/dishes/Feito.png
-- FRIED RICE: /images/dishes/Fried-Rice.png
-- HONEY FIG BURRATA: /images/dishes/Honey-Fig-Burrata.png
-- KIDS PASTA: /images/dishes/Kids-Pasta.png
-- MAR: /images/dishes/Mar.png
-- MEAT: /images/dishes/Meat.png
-- NOFF: /images/dishes/Noff.png
-- PANNACOTA DE MATCHA: /images/dishes/Pannacota-de-Matcha-Proteica.png
-- PELEIA: /images/dishes/Peleia.png
-- POK(EAT): /images/dishes/Pok-eat.png
-- RISOTO NEGRO: /images/dishes/Risoto-Negro.png
-- RISOTO PUMPKIN: /images/dishes/Risoto-Pumpkin.png
-- SALTED CARAMEL BLONDIE: /images/dishes/Salted-Caramel-Blondie.png
-- SWEET POTATO FRIES: /images/dishes/Sweet-Potato-Fries.png
-- TAPIOCA BITES: /images/dishes/Tapioca-Bites.png
-- THAI PASTA: /images/dishes/Thai-Pasta.png
-- TROPICAL: /images/dishes/Tropical.png
-- VEGGIE: /images/dishes/Veggie.png
+- AMALFI: [DISH_IMAGE_BASE]Amalfi.png
+- BROWNIE POOL: [DISH_IMAGE_BASE]BrowniePool.png
+- CEVEAT: [DISH_IMAGE_BASE]Ceveat.png
+- CHICKEN CURRY: [DISH_IMAGE_BASE]ChickenCurry.png
+- CIAO: [DISH_IMAGE_BASE]Ciao.png
+- CRISPY CHICKEN FINGERS: [DISH_IMAGE_BASE]CrispyChickenFingers.png
+- EAT NHOQUE: [DISH_IMAGE_BASE]EatNhoque.png
+- EAT CAESAR SALAD: [DISH_IMAGE_BASE]EatCaesarSalad.png
+- FEITO: [DISH_IMAGE_BASE]Feito.png
+- FRIED RICE: [DISH_IMAGE_BASE]FriedRice.png
+- HONEY FIG BURRATA: [DISH_IMAGE_BASE]HoneyFigBurrata.png
+- KIDS PASTA: [DISH_IMAGE_BASE]KidsPasta.png
+- MAR: [DISH_IMAGE_BASE]Mar.png
+- MEAT: [DISH_IMAGE_BASE]Meat.png
+- NOFF: [DISH_IMAGE_BASE]Noff.png
+- PANNACOTA DE MATCHA: [DISH_IMAGE_BASE]PannacotaDeMatchaProteica.png
+- PELEIA: [DISH_IMAGE_BASE]Peleia.png
+- POK(EAT): [DISH_IMAGE_BASE]Pokeat.png
+- RISOTO NEGRO: [DISH_IMAGE_BASE]RisotoNegro.png
+- RISOTO PUMPKIN: [DISH_IMAGE_BASE]RisotoPumpkin.png
+- SALTED CARAMEL BLONDIE: [DISH_IMAGE_BASE]SaltedCaramelBlondie.png
+- SWEET POTATO FRIES: [DISH_IMAGE_BASE]SweetPotatoFries.png
+- TAPIOCA BITES: [DISH_IMAGE_BASE]TapiocaBites.png
+- THAI PASTA: [DISH_IMAGE_BASE]ThaiPasta.png
+- TROPICAL: [DISH_IMAGE_BASE]Tropical.png
+- VEGGIE: [DISH_IMAGE_BASE]Veggie.png
 
 3. NUNCA apenas mande um link para o cliente clicar; a foto deve aparecer aberta na conversa.
 4. Se por algum motivo a imagem não carregar, o sistema mostrará um aviso amigável.
@@ -152,10 +154,20 @@ export class EatKitchenAI {
 Mantenha a mesma personalidade e regras, apenas traduza sua comunicação.
 `;
 
+    const isLocal = typeof window !== 'undefined' && (
+      window.location.hostname === 'localhost' || 
+      window.location.hostname === '127.0.0.1'
+    );
+    const imageBaseUrl = isLocal 
+      ? '/images/dishes/' 
+      : 'https://eat-kitchen-concierge-guimtfy2w-thiagozenis-projects.vercel.app/images/dishes/';
+
+    const finalSystemInstruction = SYSTEM_INSTRUCTION.replace(/\[DISH_IMAGE_BASE\]/g, imageBaseUrl) + languageInstruction;
+
     this.chat = this.genAI.chats.create({
       model: "gemini-flash-latest",
       config: {
-        systemInstruction: SYSTEM_INSTRUCTION + languageInstruction,
+        systemInstruction: finalSystemInstruction,
       },
       history: [
         {
