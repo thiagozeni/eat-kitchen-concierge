@@ -233,7 +233,7 @@ export default function App() {
   }), []);
 
   useEffect(() => {
-    document.title = "EAT + KITCHEN AI Concierge";
+    document.title = "EAT+KITCHEN AI Concierge";
   }, []);
 
   const t = TRANSLATIONS[language];
@@ -344,7 +344,7 @@ export default function App() {
             <UtensilsCrossed size={20} />
           </div>
           <div className="whitespace-nowrap">
-            <h1 className="text-xl font-semibold tracking-tight leading-none">EAT + KITCHEN</h1>
+            <h1 className="text-xl font-semibold tracking-tight leading-none">EAT+KITCHEN</h1>
             <p className="text-[10px] text-emerald-600 font-medium uppercase tracking-widest mt-0.5">AI Concierge</p>
           </div>
         </div>
@@ -583,7 +583,7 @@ export default function App() {
                 <div className="w-12 h-12 bg-white/20 rounded-2xl flex items-center justify-center mb-4">
                   <Bot size={28} />
                 </div>
-                <h2 className="text-2xl font-bold tracking-tight">EAT + KITCHEN AI</h2>
+                <h2 className="text-2xl font-bold tracking-tight">EAT+KITCHEN AI</h2>
                 <p className="text-emerald-100 text-sm mt-1">Seu consultor gastronômico inteligente</p>
               </div>
               <div className="p-8 space-y-6">
