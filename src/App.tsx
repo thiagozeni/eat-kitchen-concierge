@@ -189,13 +189,21 @@ export default function App() {
         window.location.hostname === '127.0.0.1'
       );
 
+      const GITHUB_BASE = 'https://raw.githubusercontent.com/thiagozeni/eat-kitchen-concierge/refs/heads/main/public/images/dishes/';
+
+      // Handle cases where AI might only send the filename
+      if (!src.startsWith('http') && !src.startsWith('/') && src.endsWith('.png')) {
+        src = isLocal ? `/images/dishes/${src}` : `${GITHUB_BASE}${src}`;
+      }
+
       if (src.includes('[DISH_IMAGE_BASE]')) {
-        src = src.replace('[DISH_IMAGE_BASE]', isLocal ? '/images/dishes/' : 'https://eat-kitchen-concierge-guimtfy2w-thiagozenis-projects.vercel.app/images/dishes/');
+        src = src.replace('[DISH_IMAGE_BASE]', isLocal ? '/images/dishes/' : GITHUB_BASE);
       }
       
-      // Double-safety: Prepend Vercel URL for dish images in preview if they are relative
-      if (src.startsWith('/images/dishes/') && !isLocal) {
-        src = `https://eat-kitchen-concierge-guimtfy2w-thiagozenis-projects.vercel.app${src}`;
+      // Double-safety: Prepend GitHub URL for dish images in preview if they are relative
+      if ((src.startsWith('/images/dishes/') || src.startsWith('images/dishes/')) && !isLocal) {
+        const filename = src.split('/').pop();
+        src = `${GITHUB_BASE}${filename}`;
       }
 
       const isDropbox = src.includes('dropbox.com');
@@ -209,7 +217,7 @@ export default function App() {
         }
       }
 
-      const isDishImage = src.includes('images/dishes');
+      const isDishImage = src.includes('images/dishes') || src.includes('raw.githubusercontent.com');
       
       if (!isVideo && src.startsWith('http') && !isDropbox && !isDishImage) {
         src = `https://images.weserv.nl/?url=${encodeURIComponent(src)}&w=800&q=80&output=webp&il`;

@@ -50,7 +50,10 @@ D) SE O CLIENTE PEDIR PARA VER "TODOS" OS PRATOS, ENTRADAS OU SOBREMESAS:
 🍽️ BASE DE CONHECIMENTO DO CARDÁPIO (COM FOTOS REAIS)
 Sempre que recomendar um prato, você DEVE exibir a foto dele diretamente no chat usando Markdown: ![Nome do Prato](URL).
 
-⚠️ IMPORTANTE: Você deve usar EXCLUSIVAMENTE os caminhos de imagem definidos abaixo, sem alterá-los.
+⚠️ REGRAS CRÍTICAS DE IMAGENS:
+1. Você DEVE usar EXCLUSIVAMENTE os nomes de arquivos CamelCase definidos abaixo.
+2. É TERMINANTEMENTE PROIBIDO usar nomes com hifens (ex: NÃO use "Brownie-Pool.png", USE "BrowniePool.png").
+3. Se você não tiver certeza do nome, use EXATAMENTE o que está na lista.
 
 Utilize EXCLUSIVAMENTE estas URLs oficiais para os pratos correspondentes:
 - AMALFI: [DISH_IMAGE_BASE]Amalfi.png
@@ -160,7 +163,7 @@ Mantenha a mesma personalidade e regras, apenas traduza sua comunicação.
     );
     const imageBaseUrl = isLocal 
       ? '/images/dishes/' 
-      : 'https://eat-kitchen-concierge-guimtfy2w-thiagozenis-projects.vercel.app/images/dishes/';
+      : 'https://raw.githubusercontent.com/thiagozeni/eat-kitchen-concierge/refs/heads/main/public/images/dishes/';
 
     const finalSystemInstruction = SYSTEM_INSTRUCTION.replace(/\[DISH_IMAGE_BASE\]/g, imageBaseUrl) + languageInstruction;
 
