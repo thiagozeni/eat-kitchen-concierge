@@ -254,6 +254,59 @@ interface Message {
   content: string;
 }
 
+interface MessageBubbleProps {
+  msg: Message;
+  isLast: boolean;
+  lastMessageRef: React.RefObject<HTMLDivElement | null>;
+  markdownComponents: any;
+  copiedId: string | null;
+  onCopy: (text: string, id: string) => void;
+}
+
+const MessageBubble = React.memo(({ msg, isLast, lastMessageRef, markdownComponents, copiedId, onCopy }: MessageBubbleProps) => (
+  <motion.div
+    key={msg.id}
+    ref={isLast ? lastMessageRef : null}
+    initial={{ opacity: 0, y: 10 }}
+    animate={{ opacity: 1, y: 0 }}
+    className={cn(
+      "flex gap-4 scroll-mt-24",
+      msg.role === 'user' ? "flex-row-reverse" : "flex-row"
+    )}
+  >
+    <div className={cn(
+      "w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-1",
+      msg.role === 'user' ? "bg-slate-200 text-slate-600" : "bg-emerald-100 text-emerald-600"
+    )}>
+      {msg.role === 'user' ? <User size={16} /> : <Bot size={16} />}
+    </div>
+    <div className={cn(
+      "max-w-[85%] px-4 py-3 rounded-2xl shadow-sm relative group/msg-box",
+      msg.role === 'user'
+        ? "bg-emerald-600 text-white rounded-tr-none"
+        : "bg-white text-slate-800 rounded-tl-none border border-black/5"
+    )}>
+      {msg.role === 'assistant' && (
+        <button
+          onClick={() => onCopy(msg.content, msg.id)}
+          className="absolute -right-10 top-0 p-2 text-slate-400 hover:text-emerald-600 opacity-0 group-hover/msg-box:opacity-100 transition-opacity"
+          aria-label="Copiar recomendação"
+          title="Copiar recomendação"
+        >
+          {copiedId === msg.id ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
+        </button>
+      )}
+      <div className="prose prose-sm max-w-none prose-p:leading-relaxed prose-img:rounded-xl prose-img:shadow-md prose-img:my-4">
+        <Markdown components={markdownComponents}>
+          {msg.content}
+        </Markdown>
+      </div>
+    </div>
+  </motion.div>
+));
+
+MessageBubble.displayName = 'MessageBubble';
+
 export default function App() {
   const [language, setLanguage] = useState<Language>('pt');
   const [messages, setMessages] = useState<Message[]>([]);
@@ -270,6 +323,10 @@ export default function App() {
   useEffect(() => {
     document.title = "EAT+KITCHEN AI Concierge";
   }, []);
+
+  useEffect(() => {
+    document.documentElement.lang = language;
+  }, [language]);
 
   const t = TRANSLATIONS[language];
 
@@ -408,6 +465,9 @@ export default function App() {
     }
   };
 
+  const handleSendRef = useRef(handleSend);
+  useEffect(() => { handleSendRef.current = handleSend; }, [handleSend]);
+
   const markdownComponents = React.useMemo(() => ({
     img: ({ node, ...props }: any) => {
       let src = props.src || '';
@@ -498,7 +558,7 @@ export default function App() {
         return (
           <strong 
             className="text-emerald-700 font-bold cursor-pointer hover:underline decoration-2 underline-offset-4 transition-all active:scale-95 inline-block"
-            onClick={() => handleSend(text)}
+            onClick={() => handleSendRef.current(text)}
             title={`Escolher ${text}`}
             {...props}
           >
@@ -514,15 +574,19 @@ export default function App() {
         </strong>
       );
     }
-  }), [handleSend]);
+  }), []);
 
   return (
     <div className="min-h-screen bg-[#f5f2ed] text-[#1a1a1a] font-sans selection:bg-emerald-100">
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 h-20 bg-white/80 backdrop-blur-md border-b border-black/5 z-50 flex items-center justify-between px-6 lg:px-12">
         <div
+          role="button"
+          tabIndex={0}
           onClick={() => requestAction({ type: 'reset' })}
+          onKeyDown={(e) => e.key === 'Enter' && requestAction({ type: 'reset' })}
           className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity shrink-0"
+          aria-label={t.reset}
           title={t.reset}
         >
           <div className="w-10 h-10 bg-emerald-600 rounded-full flex items-center justify-center text-white shadow-lg shadow-emerald-200 shrink-0">
@@ -546,6 +610,7 @@ export default function App() {
                     ? "bg-white shadow-sm text-emerald-600 font-bold" 
                     : "text-slate-400 hover:text-slate-600"
                 )}
+                aria-label={lang.name}
                 title={lang.name}
               >
                 {lang.flag}
@@ -563,9 +628,10 @@ export default function App() {
             ))}
           </select>
 
-          <button 
+          <button
             onClick={() => setShowHelp(true)}
             className="p-2 hover:bg-black/5 rounded-full transition-colors text-slate-400 hover:text-slate-600"
+            aria-label="Sobre o Concierge"
             title="Sobre o Concierge"
           >
             <Info size={20} />
@@ -581,44 +647,15 @@ export default function App() {
         <div className="flex-1 space-y-8 py-8">
           <AnimatePresence initial={false}>
             {messages.map((msg, index) => (
-              <motion.div
+              <MessageBubble
                 key={msg.id}
-                ref={index === messages.length - 1 ? lastMessageRef : null}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                className={cn(
-                  "flex gap-4 scroll-mt-24",
-                  msg.role === 'user' ? "flex-row-reverse" : "flex-row"
-                )}
-              >
-                <div className={cn(
-                  "w-8 h-8 rounded-full flex items-center justify-center shrink-0 mt-1",
-                  msg.role === 'user' ? "bg-slate-200 text-slate-600" : "bg-emerald-100 text-emerald-600"
-                )}>
-                  {msg.role === 'user' ? <User size={16} /> : <Bot size={16} />}
-                </div>
-                <div className={cn(
-                  "max-w-[85%] px-4 py-3 rounded-2xl shadow-sm relative group/msg-box",
-                  msg.role === 'user' 
-                    ? "bg-emerald-600 text-white rounded-tr-none" 
-                    : "bg-white text-slate-800 rounded-tl-none border border-black/5"
-                )}>
-                  {msg.role === 'assistant' && (
-                    <button
-                      onClick={() => copyToClipboard(msg.content, msg.id)}
-                      className="absolute -right-10 top-0 p-2 text-slate-400 hover:text-emerald-600 opacity-0 group-hover/msg-box:opacity-100 transition-opacity"
-                      title="Copiar recomendação"
-                    >
-                      {copiedId === msg.id ? <Check size={14} className="text-emerald-600" /> : <Copy size={14} />}
-                    </button>
-                  )}
-                  <div className="prose prose-sm max-w-none prose-p:leading-relaxed prose-img:rounded-xl prose-img:shadow-md prose-img:my-4">
-                    <Markdown components={markdownComponents}>
-                      {msg.content}
-                    </Markdown>
-                  </div>
-                </div>
-              </motion.div>
+                msg={msg}
+                isLast={index === messages.length - 1}
+                lastMessageRef={lastMessageRef}
+                markdownComponents={markdownComponents}
+                copiedId={copiedId}
+                onCopy={copyToClipboard}
+              />
             ))}
           </AnimatePresence>
           
@@ -734,7 +771,7 @@ export default function App() {
               animate={{ scale: 1, opacity: 1 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
               src={selectedImage}
-              alt="Zoomed"
+              alt={selectedImage ? decodeURIComponent(selectedImage.split('/').pop()?.replace(/[-_]/g, ' ').replace(/\.[^.]+$/, '') || 'Foto do prato') : 'Foto do prato'}
               className="max-w-full max-h-full rounded-2xl shadow-2xl object-contain"
               onClick={(e) => e.stopPropagation()}
             />
