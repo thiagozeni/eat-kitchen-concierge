@@ -311,7 +311,7 @@ const DishImage = React.memo(({ src, alt, title, onClick }: DishImageProps) => {
           isLoaded ? "opacity-100" : "opacity-0"
         )}
         loading="lazy"
-        onClick={() => onClick(src)}
+        onClick={() => onClick(toWebp(1200))}
         onLoad={() => setIsLoaded(true)}
         onError={() => setHasError(true)}
       />
