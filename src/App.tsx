@@ -33,6 +33,10 @@ const LANGUAGES = [
   { code: 'en', name: 'English', flag: '🇺🇸' },
   { code: 'es', name: 'Español', flag: '🇪🇸' },
   { code: 'ru', name: 'Русский', flag: '🇷🇺' },
+  { code: 'de', name: 'Deutsch', flag: '🇩🇪' },
+  { code: 'it', name: 'Italiano', flag: '🇮🇹' },
+  { code: 'zh', name: '中文', flag: '🇨🇳' },
+  { code: 'ja', name: '日本語', flag: '🇯🇵' },
 ] as const;
 
 const TRANSLATIONS = {
@@ -98,6 +102,70 @@ const TRANSLATIONS = {
       hungry: 'Сильный голод',
       fast: 'Что-то быстрое',
       dessert: 'Хочу десерт 😅'
+    }
+  },
+  de: {
+    greeting: 'Hallo! 😄 Sagen Sie mir: Wonach suchen Sie heute?',
+    placeholder: 'Schreibe eine Nachricht...',
+    reset: 'Gespräch zurücksetzen',
+    footer: 'P E S S O A S .  C O M I D A .  V E R D A D E',
+    options: {
+      light: 'Etwas Leichtes',
+      protein: 'Viel Protein',
+      veggie: 'Vegetarisch',
+      comfort: 'Comfort Food',
+      different: 'Etwas anderes',
+      hungry: 'Großer Hunger',
+      fast: 'Etwas Schnelles',
+      dessert: 'Ich möchte Nachtisch 😅'
+    }
+  },
+  it: {
+    greeting: 'Ciao! 😄 Dimmi una cosa: cosa cerchi oggi?',
+    placeholder: 'Scrivi un messaggio...',
+    reset: 'Reimposta conversazione',
+    footer: 'P E S S O A S .  C O M I D A .  V E R D A D E',
+    options: {
+      light: 'Qualcosa di leggero',
+      protein: 'Molte proteine',
+      veggie: 'Vegetariano',
+      comfort: 'Comfort food',
+      different: 'Qualcosa di diverso',
+      hungry: 'Molta fame',
+      fast: 'Qualcosa di veloce',
+      dessert: 'Voglio il dolce 😅'
+    }
+  },
+  zh: {
+    greeting: '你好！😄 告诉我：你今天想找点什么？',
+    placeholder: '输入消息...',
+    reset: '重置对话',
+    footer: 'P E S S O A S .  C O M I D A .  V E R D A D E',
+    options: {
+      light: '清淡一点',
+      protein: '高蛋白',
+      veggie: '素食',
+      comfort: '治愈美食',
+      different: '来点不一样的',
+      hungry: '我很饿',
+      fast: '快餐',
+      dessert: '我想吃甜点 😅'
+    }
+  },
+  ja: {
+    greeting: 'こんにちは！😄 今日は何をお探しですか？',
+    placeholder: 'メッセージを入力...',
+    reset: '会話をリセット',
+    footer: 'P E S S O A S .  C O M I D A .  V E R D A D E',
+    options: {
+      light: '軽いもの',
+      protein: '高タンパク',
+      veggie: 'ベジタリアン',
+      comfort: 'コンフォートフード',
+      different: '何か違うもの',
+      hungry: 'お腹が空いた',
+      fast: '早いもの',
+      dessert: 'デザートが食べたい 😅'
     }
   }
 };
@@ -180,6 +248,109 @@ export default function App() {
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => {
+    document.title = "EAT+KITCHEN AI Concierge";
+  }, []);
+
+  const t = TRANSLATIONS[language];
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (!scrollContainerRef.current) return;
+      const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
+      setShowScrollButton(scrollHeight - scrollTop - clientHeight > 300);
+    };
+
+    const container = scrollContainerRef.current;
+    container?.addEventListener('scroll', handleScroll);
+    return () => container?.removeEventListener('scroll', handleScroll);
+  }, []);
+
+  const copyToClipboard = (text: string, id: string) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedId(id);
+      setTimeout(() => setCopiedId(null), 2000);
+    });
+  };
+
+  const scrollToBottom = () => {
+    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+  };
+
+  useEffect(() => {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (apiKey) {
+      const eatAi = new EatKitchenAI(apiKey, language);
+      setAi(eatAi);
+      
+      // Initial greeting
+      setMessages([
+        {
+          id: '1',
+          role: 'assistant',
+          content: t.greeting
+        }
+      ]);
+    }
+  }, [language]);
+
+  const lastMessageRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (lastMessageRef.current) {
+      lastMessageRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }, [messages]);
+
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
+
+  const handleSend = React.useCallback(async (text: string = input) => {
+    if (!text.trim() || !ai || isLoading) return;
+
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: text
+    };
+
+    setMessages(prev => [...prev, userMessage]);
+    setInput('');
+    setIsLoading(true);
+
+    try {
+      const response = await ai.sendMessage(text);
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: response || 'Desculpe, tive um probleminha. Pode repetir?'
+      };
+      setMessages(prev => [...prev, assistantMessage]);
+    } catch (error) {
+      console.error('Error sending message:', error);
+      setMessages(prev => [...prev, {
+        id: Date.now().toString(),
+        role: 'assistant',
+        content: 'Ops! Tive um erro de conexão. Vamos tentar de novo?'
+      }]);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [input, ai, isLoading]);
+
+  const resetChat = () => {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (apiKey) {
+      setAi(new EatKitchenAI(apiKey, language));
+      setMessages([
+        {
+          id: '1',
+          role: 'assistant',
+          content: t.greeting
+        }
+      ]);
+    }
+  };
+
   const markdownComponents = React.useMemo(() => ({
     img: ({ node, ...props }: any) => {
       let src = props.src || '';
@@ -254,107 +425,39 @@ export default function App() {
           onClick={(s) => setSelectedImage(s)} 
         />
       );
+    },
+    strong: ({ node, children, ...props }: any) => {
+      // Extract text content from children
+      const text = React.Children.toArray(children).map((child: any) => {
+        if (typeof child === 'string') return child;
+        if (child?.props?.children) return child.props.children;
+        return '';
+      }).join('');
+
+      // Check if it's a selection (starts with a number like "1. ")
+      const isSelection = /^\d+\.\s/.test(text);
+
+      if (isSelection) {
+        return (
+          <strong 
+            className="text-emerald-700 font-bold cursor-pointer hover:underline decoration-2 underline-offset-4 transition-all active:scale-95 inline-block"
+            onClick={() => handleSend(text)}
+            title={`Escolher ${text}`}
+            {...props}
+          >
+            {children}
+          </strong>
+        );
+      }
+
+      // Regular bold for confirmation or other highlights
+      return (
+        <strong className="font-bold" {...props}>
+          {children}
+        </strong>
+      );
     }
-  }), []);
-
-  useEffect(() => {
-    document.title = "EAT+KITCHEN AI Concierge";
-  }, []);
-
-  const t = TRANSLATIONS[language];
-
-  useEffect(() => {
-    const handleScroll = () => {
-      if (!scrollContainerRef.current) return;
-      const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current;
-      setShowScrollButton(scrollHeight - scrollTop - clientHeight > 300);
-    };
-
-    const container = scrollContainerRef.current;
-    container?.addEventListener('scroll', handleScroll);
-    return () => container?.removeEventListener('scroll', handleScroll);
-  }, []);
-
-  const copyToClipboard = (text: string, id: string) => {
-    navigator.clipboard.writeText(text).then(() => {
-      setCopiedId(id);
-      setTimeout(() => setCopiedId(null), 2000);
-    });
-  };
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  };
-
-  useEffect(() => {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (apiKey) {
-      const eatAi = new EatKitchenAI(apiKey, language);
-      setAi(eatAi);
-      
-      // Initial greeting
-      setMessages([
-        {
-          id: '1',
-          role: 'assistant',
-          content: t.greeting
-        }
-      ]);
-    }
-  }, [language]);
-
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
-
-  const [selectedImage, setSelectedImage] = useState<string | null>(null);
-
-  const handleSend = async (text: string = input) => {
-    if (!text.trim() || !ai || isLoading) return;
-
-    const userMessage: Message = {
-      id: Date.now().toString(),
-      role: 'user',
-      content: text
-    };
-
-    setMessages(prev => [...prev, userMessage]);
-    setInput('');
-    setIsLoading(true);
-
-    try {
-      const response = await ai.sendMessage(text);
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: response || 'Desculpe, tive um probleminha. Pode repetir?'
-      };
-      setMessages(prev => [...prev, assistantMessage]);
-    } catch (error) {
-      console.error('Error sending message:', error);
-      setMessages(prev => [...prev, {
-        id: Date.now().toString(),
-        role: 'assistant',
-        content: 'Ops! Tive um erro de conexão. Vamos tentar de novo?'
-      }]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const resetChat = () => {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (apiKey) {
-      setAi(new EatKitchenAI(apiKey, language));
-      setMessages([
-        {
-          id: '1',
-          role: 'assistant',
-          content: t.greeting
-        }
-      ]);
-    }
-  };
+  }), [handleSend]);
 
   return (
     <div className="min-h-screen bg-[#f5f2ed] text-[#1a1a1a] font-sans selection:bg-emerald-100">
@@ -420,13 +523,14 @@ export default function App() {
       >
         <div className="flex-1 space-y-8 py-8">
           <AnimatePresence initial={false}>
-            {messages.map((msg) => (
+            {messages.map((msg, index) => (
               <motion.div
                 key={msg.id}
+                ref={index === messages.length - 1 ? lastMessageRef : null}
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 className={cn(
-                  "flex gap-4",
+                  "flex gap-4 scroll-mt-24",
                   msg.role === 'user' ? "flex-row-reverse" : "flex-row"
                 )}
               >
