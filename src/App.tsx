@@ -192,6 +192,11 @@ const DishImage = React.memo(({ src, alt, title, onClick }: DishImageProps) => {
   const [isLoaded, setIsLoaded] = useState(false);
   const [hasError, setHasError] = useState(false);
 
+  // Deriva URLs WebP a partir do src PNG original
+  const toWebp = (size: number) => src.replace(/\.png$/i, `-${size}w.webp`);
+  const webpSrcSet = `${toWebp(400)} 400w, ${toWebp(800)} 800w, ${toWebp(1200)} 1200w`;
+  const webpSrc = toWebp(800);
+
   if (hasError) {
     return (
       <span className="flex w-full aspect-video bg-slate-100 items-center justify-center text-slate-400 rounded-xl my-4 border border-black/5">
@@ -205,11 +210,13 @@ const DishImage = React.memo(({ src, alt, title, onClick }: DishImageProps) => {
 
   return (
     <span className="block relative group/img my-4 bg-slate-50 rounded-xl overflow-hidden border border-black/5">
-      <img 
-        alt={alt}
+      <img
+        alt={alt || title || 'Foto do prato'}
         title={title}
-        src={src}
-        referrerPolicy="no-referrer" 
+        src={webpSrc}
+        srcSet={webpSrcSet}
+        sizes="(max-width: 640px) 400px, (max-width: 1024px) 800px, 1200px"
+        referrerPolicy="no-referrer"
         className={cn(
           "w-full aspect-video object-cover rounded-xl shadow-sm hover:shadow-md transition-opacity duration-500 cursor-zoom-in",
           isLoaded ? "opacity-100" : "opacity-0"
@@ -308,7 +315,7 @@ export default function App() {
     if (!text.trim() || !ai || isLoading) return;
 
     const userMessage: Message = {
-      id: Date.now().toString(),
+      id: crypto.randomUUID(),
       role: 'user',
       content: text
     };
@@ -317,18 +324,39 @@ export default function App() {
     setInput('');
     setIsLoading(true);
 
+    const streamId = crypto.randomUUID();
     try {
-      const response = await ai.sendMessage(text);
-      const assistantMessage: Message = {
-        id: (Date.now() + 1).toString(),
-        role: 'assistant',
-        content: response || 'Desculpe, tive um probleminha. Pode repetir?'
-      };
-      setMessages(prev => [...prev, assistantMessage]);
+      const stream = await ai.sendMessageStream(text);
+      let fullContent = '';
+      let firstChunk = true;
+
+      for await (const chunk of stream) {
+        const chunkText = chunk.text;
+        if (chunkText) {
+          fullContent += chunkText;
+          if (firstChunk) {
+            firstChunk = false;
+            setIsLoading(false);
+            setMessages(prev => [...prev, { id: streamId, role: 'assistant', content: fullContent }]);
+          } else {
+            setMessages(prev => prev.map(m =>
+              m.id === streamId ? { ...m, content: fullContent } : m
+            ));
+          }
+        }
+      }
+
+      if (firstChunk) {
+        setMessages(prev => [...prev, {
+          id: streamId,
+          role: 'assistant',
+          content: 'Desculpe, tive um probleminha. Pode repetir?'
+        }]);
+      }
     } catch (error) {
       console.error('Error sending message:', error);
       setMessages(prev => [...prev, {
-        id: Date.now().toString(),
+        id: crypto.randomUUID(),
         role: 'assistant',
         content: 'Ops! Tive um erro de conexão. Vamos tentar de novo?'
       }]);
@@ -343,7 +371,7 @@ export default function App() {
       setAi(new EatKitchenAI(apiKey, language));
       setMessages([
         {
-          id: '1',
+          id: crypto.randomUUID(),
           role: 'assistant',
           content: t.greeting
         }
@@ -633,7 +661,7 @@ export default function App() {
               type="text"
               value={input}
               onChange={(e) => setInput(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && handleSend()}
+              onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
               placeholder={t.placeholder}
               className="w-full bg-white border border-black/10 rounded-2xl px-6 py-4 pr-16 shadow-xl shadow-black/5 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
             />
