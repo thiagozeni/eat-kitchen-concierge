@@ -432,20 +432,14 @@ export default function App() {
   };
 
   useEffect(() => {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (apiKey) {
-      const eatAi = new EatKitchenAI(apiKey, language);
-      setAi(eatAi);
-      
-      // Initial greeting
-      setMessages([
-        {
-          id: '1',
-          role: 'assistant',
-          content: t.greeting
-        }
-      ]);
-    }
+    setAi(new EatKitchenAI(language));
+    setMessages([
+      {
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content: t.greeting
+      }
+    ]);
   }, [language]);
 
   const lastMessageRef = useRef<HTMLDivElement>(null);
@@ -477,8 +471,7 @@ export default function App() {
       let fullContent = '';
       let firstChunk = true;
 
-      for await (const chunk of stream) {
-        const chunkText = chunk.text;
+      for await (const chunkText of stream) {
         if (chunkText) {
           fullContent += chunkText;
           if (firstChunk) {
@@ -513,17 +506,14 @@ export default function App() {
   }, [input, ai, isLoading]);
 
   const resetChat = () => {
-    const apiKey = process.env.GEMINI_API_KEY;
-    if (apiKey) {
-      setAi(new EatKitchenAI(apiKey, language));
-      setMessages([
-        {
-          id: crypto.randomUUID(),
-          role: 'assistant',
-          content: t.greeting
-        }
-      ]);
-    }
+    setAi(new EatKitchenAI(language));
+    setMessages([
+      {
+        id: crypto.randomUUID(),
+        role: 'assistant',
+        content: t.greeting
+      }
+    ]);
   };
 
   const executeAction = (action: { type: 'reset' } | { type: 'language'; lang: Language }) => {
