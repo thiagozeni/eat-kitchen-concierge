@@ -11,13 +11,11 @@ import {
   Sparkles, 
   Clock, 
   IceCream,
-  ChevronRight,
   X,
   Copy,
   Check,
   ArrowDown,
-  Info,
-  ExternalLink
+  Info
 } from 'lucide-react';
 import Markdown from 'react-markdown';
 import { clsx, type ClassValue } from 'clsx';
@@ -45,6 +43,16 @@ const TRANSLATIONS = {
     placeholder: 'Digite sua mensagem...',
     reset: 'Reiniciar conversa',
     footer: 'P E S S O A S .  C O M I D A .  V E R D A D E',
+    help: {
+      subtitle: 'Seu consultor gastronômico inteligente',
+      rec: 'Recomendações Personalizadas',
+      recDesc: 'O AI Concierge entende seu momento e sugere o prato perfeito baseado no seu objetivo nutricional.',
+      health: 'Foco em Saúde',
+      healthDesc: 'Especialista em alimentação equilibrada, respeitando suas restrições e preferências.',
+      visual: 'Experiência Visual',
+      visualDesc: 'Veja fotos reais dos pratos diretamente na conversa para ajudar na sua decisão.',
+      cta: 'Entendi, vamos lá!'
+    },
     options: {
       light: 'Algo mais leve',
       protein: 'Algo bem proteico',
@@ -61,6 +69,16 @@ const TRANSLATIONS = {
     placeholder: 'Type your message...',
     reset: 'Reset conversation',
     footer: 'P E S S O A S .  C O M I D A .  V E R D A D E',
+    help: {
+      subtitle: 'Your intelligent gastronomic consultant',
+      rec: 'Personalized Recommendations',
+      recDesc: 'The AI Concierge understands your moment and suggests the perfect dish based on your nutritional goals.',
+      health: 'Health Focus',
+      healthDesc: 'Expert in balanced nutrition, respecting your restrictions and preferences.',
+      visual: 'Visual Experience',
+      visualDesc: 'See real photos of the dishes directly in the conversation to help you decide.',
+      cta: 'Got it, let\'s go!'
+    },
     options: {
       light: 'Something light',
       protein: 'High protein',
@@ -77,6 +95,16 @@ const TRANSLATIONS = {
     placeholder: 'Escribe tu mensaje...',
     reset: 'Reiniciar conversación',
     footer: 'P E S S O A S .  C O M I D A .  V E R D A D E',
+    help: {
+      subtitle: 'Tu consultor gastronómico inteligente',
+      rec: 'Recomendaciones Personalizadas',
+      recDesc: 'El AI Concierge entiende tu momento y sugiere el plato perfecto según tu objetivo nutricional.',
+      health: 'Enfoque en Salud',
+      healthDesc: 'Experto en alimentación equilibrada, respetando tus restricciones y preferencias.',
+      visual: 'Experiencia Visual',
+      visualDesc: 'Ve fotos reales de los platos directamente en la conversación para ayudarte a decidir.',
+      cta: '¡Entendido, vamos!'
+    },
     options: {
       light: 'Algo más ligero',
       protein: 'Algo proteico',
@@ -93,6 +121,16 @@ const TRANSLATIONS = {
     placeholder: 'Введите сообщение...',
     reset: 'Сбросить чат',
     footer: 'P E S S O A S .  C O M I D A .  V E R D A D E',
+    help: {
+      subtitle: 'Ваш интеллектуальный гастрономический консультант',
+      rec: 'Персональные рекомендации',
+      recDesc: 'AI Консьерж понимает ваш момент и предлагает идеальное блюдо на основе ваших целей.',
+      health: 'Фокус на здоровье',
+      healthDesc: 'Эксперт по сбалансированному питанию, учитывающий ваши ограничения и предпочтения.',
+      visual: 'Визуальный опыт',
+      visualDesc: 'Смотрите реальные фото блюд прямо в разговоре, чтобы легче выбрать.',
+      cta: 'Понял, вперёд!'
+    },
     options: {
       light: 'Что-то легкое',
       protein: 'Много белка',
@@ -109,6 +147,16 @@ const TRANSLATIONS = {
     placeholder: 'Schreibe eine Nachricht...',
     reset: 'Gespräch zurücksetzen',
     footer: 'P E S S O A S .  C O M I D A .  V E R D A D E',
+    help: {
+      subtitle: 'Ihr intelligenter Gastronomiebe­rater',
+      rec: 'Persönliche Empfehlungen',
+      recDesc: 'Der AI Concierge versteht Ihren Moment und schlägt das perfekte Gericht nach Ihren Zielen vor.',
+      health: 'Fokus auf Gesundheit',
+      healthDesc: 'Experte für ausgewogene Ernährung, der Ihre Einschränkungen und Vorlieben respektiert.',
+      visual: 'Visuelles Erlebnis',
+      visualDesc: 'Sehen Sie echte Fotos der Gerichte direkt im Gespräch, um Ihre Entscheidung zu erleichtern.',
+      cta: 'Verstanden, los geht\'s!'
+    },
     options: {
       light: 'Etwas Leichtes',
       protein: 'Viel Protein',
@@ -125,6 +173,16 @@ const TRANSLATIONS = {
     placeholder: 'Scrivi un messaggio...',
     reset: 'Reimposta conversazione',
     footer: 'P E S S O A S .  C O M I D A .  V E R D A D E',
+    help: {
+      subtitle: 'Il tuo consulente gastronomico intelligente',
+      rec: 'Raccomandazioni Personalizzate',
+      recDesc: 'L\'AI Concierge capisce il tuo momento e suggerisce il piatto perfetto in base ai tuoi obiettivi.',
+      health: 'Focus sulla Salute',
+      healthDesc: 'Esperto di alimentazione equilibrata, rispettando le tue restrizioni e preferenze.',
+      visual: 'Esperienza Visiva',
+      visualDesc: 'Guarda le foto reali dei piatti direttamente nella conversazione per aiutarti a decidere.',
+      cta: 'Capito, andiamo!'
+    },
     options: {
       light: 'Qualcosa di leggero',
       protein: 'Molte proteine',
@@ -141,6 +199,16 @@ const TRANSLATIONS = {
     placeholder: '输入消息...',
     reset: '重置对话',
     footer: 'P E S S O A S .  C O M I D A .  V E R D A D E',
+    help: {
+      subtitle: '您的智能美食顾问',
+      rec: '个性化推荐',
+      recDesc: 'AI 礼宾员了解您的需求，根据您的营养目标推荐完美菜肴。',
+      health: '健康饮食',
+      healthDesc: '均衡饮食专家，尊重您的饮食限制和偏好。',
+      visual: '视觉体验',
+      visualDesc: '在对话中直接查看菜肴的真实照片，帮助您做出决定。',
+      cta: '明白了，出发！'
+    },
     options: {
       light: '清淡一点',
       protein: '高蛋白',
@@ -157,6 +225,16 @@ const TRANSLATIONS = {
     placeholder: 'メッセージを入力...',
     reset: '会話をリセット',
     footer: 'P E S S O A S .  C O M I D A .  V E R D A D E',
+    help: {
+      subtitle: 'あなたのインテリジェントな美食コンシェルジュ',
+      rec: 'パーソナライズされたおすすめ',
+      recDesc: 'AIコンシェルジュはあなたの状況を理解し、栄養目標に基づいた最適な料理を提案します。',
+      health: '健康へのこだわり',
+      healthDesc: '均衡のとれた食事の専門家として、あなたの制限や好みを尊重します。',
+      visual: 'ビジュアル体験',
+      visualDesc: '会話の中でリアルな料理写真を直接見て、決断を助けます。',
+      cta: 'わかった、行こう！'
+    },
     options: {
       light: '軽いもの',
       protein: '高タンパク',
@@ -845,7 +923,7 @@ export default function App() {
                   <Bot size={28} />
                 </div>
                 <h2 className="text-2xl font-bold tracking-tight">EAT+KITCHEN AI</h2>
-                <p className="text-emerald-100 text-sm mt-1">Seu consultor gastronômico inteligente</p>
+                <p className="text-emerald-100 text-sm mt-1">{t.help.subtitle}</p>
               </div>
               <div className="p-8 space-y-6">
                 <div className="space-y-4">
@@ -854,8 +932,8 @@ export default function App() {
                       <Sparkles size={18} />
                     </div>
                     <div>
-                      <h3 className="font-bold text-slate-800 text-sm">Recomendações Personalizadas</h3>
-                      <p className="text-slate-500 text-xs leading-relaxed">O AI Concierge entende seu momento e sugere o prato perfeito baseado no seu objetivo nutricional.</p>
+                      <h3 className="font-bold text-slate-800 text-sm">{t.help.rec}</h3>
+                      <p className="text-slate-500 text-xs leading-relaxed">{t.help.recDesc}</p>
                     </div>
                   </div>
                   <div className="flex gap-4">
@@ -863,8 +941,8 @@ export default function App() {
                       <Leaf size={18} />
                     </div>
                     <div>
-                      <h3 className="font-bold text-slate-800 text-sm">Foco em Saúde</h3>
-                      <p className="text-slate-500 text-xs leading-relaxed">Especialista em alimentação equilibrada, respeitando suas restrições e preferências.</p>
+                      <h3 className="font-bold text-slate-800 text-sm">{t.help.health}</h3>
+                      <p className="text-slate-500 text-xs leading-relaxed">{t.help.healthDesc}</p>
                     </div>
                   </div>
                   <div className="flex gap-4">
@@ -872,18 +950,18 @@ export default function App() {
                       <UtensilsCrossed size={18} />
                     </div>
                     <div>
-                      <h3 className="font-bold text-slate-800 text-sm">Experiência Visual</h3>
-                      <p className="text-slate-500 text-xs leading-relaxed">Veja fotos reais dos pratos diretamente na conversa para ajudar na sua decisão.</p>
+                      <h3 className="font-bold text-slate-800 text-sm">{t.help.visual}</h3>
+                      <p className="text-slate-500 text-xs leading-relaxed">{t.help.visualDesc}</p>
                     </div>
                   </div>
                 </div>
-                
+
                 <div className="pt-4 border-t border-slate-100">
-                  <button 
+                  <button
                     onClick={() => setShowHelp(false)}
                     className="w-full py-3 bg-slate-900 text-white rounded-xl font-bold text-sm hover:bg-slate-800 transition-colors"
                   >
-                    Entendi, vamos lá!
+                    {t.help.cta}
                   </button>
                 </div>
               </div>
