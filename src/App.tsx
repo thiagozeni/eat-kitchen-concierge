@@ -170,6 +170,17 @@ const TRANSLATIONS = {
   }
 };
 
+const CONFIRM_TEXTS: Record<Language, { title: string; body: string; confirm: string; cancel: string }> = {
+  pt: { title: 'Reiniciar conversa?', body: 'A conversa atual será perdida.', confirm: 'Sim, continuar', cancel: 'Cancelar' },
+  en: { title: 'Reset conversation?', body: 'The current conversation will be lost.', confirm: 'Yes, continue', cancel: 'Cancel' },
+  es: { title: '¿Reiniciar conversación?', body: 'La conversación actual se perderá.', confirm: 'Sí, continuar', cancel: 'Cancelar' },
+  ru: { title: 'Сбросить чат?', body: 'Текущий разговор будет потерян.', confirm: 'Да, продолжить', cancel: 'Отмена' },
+  de: { title: 'Gespräch zurücksetzen?', body: 'Das aktuelle Gespräch geht verloren.', confirm: 'Ja, weiter', cancel: 'Abbrechen' },
+  it: { title: 'Reimpostare la conversazione?', body: 'La conversazione attuale andrà persa.', confirm: 'Sì, continua', cancel: 'Annulla' },
+  zh: { title: '重置对话？', body: '当前对话将会丢失。', confirm: '是，继续', cancel: '取消' },
+  ja: { title: '会話をリセット？', body: '現在の会話が失われます。', confirm: 'はい、続ける', cancel: 'キャンセル' },
+};
+
 const getQuickOptions = (lang: Language) => [
   { label: TRANSLATIONS[lang].options.light, icon: Leaf, color: 'text-emerald-600 bg-emerald-50' },
   { label: TRANSLATIONS[lang].options.protein, icon: Dumbbell, color: 'text-blue-600 bg-blue-50' },
@@ -252,6 +263,7 @@ export default function App() {
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [pendingAction, setPendingAction] = useState<{ type: 'reset' } | { type: 'language'; lang: Language } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -379,6 +391,23 @@ export default function App() {
     }
   };
 
+  const executeAction = (action: { type: 'reset' } | { type: 'language'; lang: Language }) => {
+    if (action.type === 'reset') {
+      resetChat();
+    } else {
+      setLanguage(action.lang);
+    }
+    setPendingAction(null);
+  };
+
+  const requestAction = (action: { type: 'reset' } | { type: 'language'; lang: Language }) => {
+    if (messages.length > 1) {
+      setPendingAction(action);
+    } else {
+      executeAction(action);
+    }
+  };
+
   const markdownComponents = React.useMemo(() => ({
     img: ({ node, ...props }: any) => {
       let src = props.src || '';
@@ -491,8 +520,8 @@ export default function App() {
     <div className="min-h-screen bg-[#f5f2ed] text-[#1a1a1a] font-sans selection:bg-emerald-100">
       {/* Header */}
       <header className="fixed top-0 left-0 right-0 h-20 bg-white/80 backdrop-blur-md border-b border-black/5 z-50 flex items-center justify-between px-6 lg:px-12">
-        <div 
-          onClick={resetChat}
+        <div
+          onClick={() => requestAction({ type: 'reset' })}
           className="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity shrink-0"
           title={t.reset}
         >
@@ -510,7 +539,7 @@ export default function App() {
             {LANGUAGES.map((lang) => (
               <button
                 key={lang.code}
-                onClick={() => setLanguage(lang.code)}
+                onClick={() => requestAction({ type: 'language', lang: lang.code })}
                 className={cn(
                   "px-2 py-1 rounded-md text-sm transition-all",
                   language === lang.code 
@@ -526,7 +555,7 @@ export default function App() {
           
           <select 
             value={language}
-            onChange={(e) => setLanguage(e.target.value as Language)}
+            onChange={(e) => requestAction({ type: 'language', lang: e.target.value as Language })}
             className="sm:hidden bg-black/5 border-none rounded-lg text-xs font-bold p-2 focus:ring-0"
           >
             {LANGUAGES.map(lang => (
@@ -709,6 +738,44 @@ export default function App() {
               className="max-w-full max-h-full rounded-2xl shadow-2xl object-contain"
               onClick={(e) => e.stopPropagation()}
             />
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Confirm Reset/Language Modal */}
+      <AnimatePresence>
+        {pendingAction && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[100] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
+            onClick={() => setPendingAction(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="bg-white max-w-sm w-full rounded-3xl p-8 shadow-2xl"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h2 className="text-lg font-bold text-slate-900 mb-2">{CONFIRM_TEXTS[language].title}</h2>
+              <p className="text-slate-500 text-sm mb-6">{CONFIRM_TEXTS[language].body}</p>
+              <div className="flex gap-3">
+                <button
+                  onClick={() => setPendingAction(null)}
+                  className="flex-1 py-3 rounded-xl border border-black/10 text-slate-600 font-semibold text-sm hover:bg-slate-50 transition-colors"
+                >
+                  {CONFIRM_TEXTS[language].cancel}
+                </button>
+                <button
+                  onClick={() => executeAction(pendingAction)}
+                  className="flex-1 py-3 rounded-xl bg-slate-900 text-white font-semibold text-sm hover:bg-slate-800 transition-colors"
+                >
+                  {CONFIRM_TEXTS[language].confirm}
+                </button>
+              </div>
+            </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
