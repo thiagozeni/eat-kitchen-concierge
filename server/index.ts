@@ -3,7 +3,16 @@ import { GoogleGenAI } from '@google/genai';
 import 'dotenv/config';
 
 const app = express();
-app.use(express.json({ limit: '100kb' }));
+app.use(express.json({ limit: '20kb' }));
+
+// CORS restrito ao origin do frontend
+const ALLOWED_ORIGIN = process.env.ALLOWED_ORIGIN ?? 'http://localhost:3000';
+app.use((_req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', ALLOWED_ORIGIN);
+  res.setHeader('Access-Control-Allow-Methods', 'POST');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+  next();
+});
 
 type Language = 'pt' | 'en' | 'es' | 'ru' | 'de' | 'it' | 'zh' | 'ja';
 
@@ -71,6 +80,29 @@ Principal → entrada → sobremesa. Ofereça 2-3 opções por etapa. Sugira upg
 Nunca invente pratos, não fale de preços (exceto upgrades), não dê informações médicas. Sempre oriente o pedido para atendente ou caixa.
 `;
 
+function validateRequest(message: unknown, history: unknown, language: unknown) {
+  if (!message || typeof message !== 'string' || message.trim().length === 0 || message.length > 2000) {
+    return { ok: false as const, error: 'Mensagem inválida.' };
+  }
+  if (!VALID_LANGUAGES.has(language as Language)) {
+    return { ok: false as const, error: 'Idioma inválido.' };
+  }
+  if (!Array.isArray(history) || history.length > 40) {
+    return { ok: false as const, error: 'Histórico inválido.' };
+  }
+  const safeHistory = history.filter(
+    (e): e is { role: 'user' | 'model'; parts: [{ text: string }] } =>
+      e !== null &&
+      typeof e === 'object' &&
+      (e.role === 'user' || e.role === 'model') &&
+      Array.isArray(e.parts) &&
+      e.parts.length > 0 &&
+      typeof e.parts[0]?.text === 'string' &&
+      e.parts[0].text.length <= 8000
+  );
+  return { ok: true as const, lang: language as Language, safeHistory };
+}
+
 app.post('/api/chat/stream', async (req, res) => {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {
@@ -78,14 +110,15 @@ app.post('/api/chat/stream', async (req, res) => {
     return;
   }
 
-  const { message, history = [], language = 'pt' } = req.body;
-
-  if (!message || typeof message !== 'string' || message.length > 2000) {
-    res.status(400).json({ error: 'Mensagem inválida.' });
+  const { message, history, language } = req.body;
+  const validation = validateRequest(message, history, language);
+  if (!validation.ok) {
+    res.status(400).json({ error: validation.error });
     return;
   }
 
-  const lang: Language = VALID_LANGUAGES.has(language) ? language : 'pt';
+  const lang = validation.lang!;
+  const safeHistory = validation.safeHistory!;
   const languageInstruction = `\n🌐 Atenda EXCLUSIVAMENTE em ${LANGUAGE_NAMES[lang]}. Mesma personalidade e regras, apenas traduza a comunicação.`;
 
   try {
@@ -93,7 +126,7 @@ app.post('/api/chat/stream', async (req, res) => {
     const chat = genAI.chats.create({
       model: 'gemini-flash-latest',
       config: { systemInstruction: SYSTEM_INSTRUCTION + languageInstruction },
-      history,
+      history: safeHistory,
     });
 
     res.setHeader('Content-Type', 'text/event-stream');

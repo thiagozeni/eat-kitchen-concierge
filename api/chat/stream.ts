@@ -70,12 +70,40 @@ Nunca invente pratos, não fale de preços (exceto upgrades), não dê informaç
 function readBody(req: IncomingMessage): Promise<any> {
   return new Promise((resolve, reject) => {
     let data = '';
-    req.on('data', chunk => { data += chunk; });
+    let bytes = 0;
+    req.on('data', (chunk: Buffer) => {
+      bytes += chunk.length;
+      if (bytes > 20 * 1024) { reject(new Error('Payload too large')); return; }
+      data += chunk;
+    });
     req.on('end', () => {
       try { resolve(JSON.parse(data)); } catch { reject(new Error('Invalid JSON')); }
     });
     req.on('error', reject);
   });
+}
+
+function validateRequest(message: unknown, history: unknown, language: unknown) {
+  if (!message || typeof message !== 'string' || message.trim().length === 0 || message.length > 2000) {
+    return { ok: false as const, error: 'Mensagem inválida.' };
+  }
+  if (!VALID_LANGUAGES.has(language as Language)) {
+    return { ok: false as const, error: 'Idioma inválido.' };
+  }
+  if (!Array.isArray(history) || history.length > 40) {
+    return { ok: false as const, error: 'Histórico inválido.' };
+  }
+  const safeHistory = history.filter(
+    (e): e is { role: 'user' | 'model'; parts: [{ text: string }] } =>
+      e !== null &&
+      typeof e === 'object' &&
+      (e.role === 'user' || e.role === 'model') &&
+      Array.isArray(e.parts) &&
+      e.parts.length > 0 &&
+      typeof e.parts[0]?.text === 'string' &&
+      e.parts[0].text.length <= 8000
+  );
+  return { ok: true as const, lang: language as Language, safeHistory };
 }
 
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
@@ -100,15 +128,16 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     return;
   }
 
-  const { message, history = [], language = 'pt' } = body;
-
-  if (!message || typeof message !== 'string' || message.length > 2000) {
+  const { message, history, language } = body;
+  const validation = validateRequest(message, history, language);
+  if (!validation.ok) {
     res.writeHead(400, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ error: 'Mensagem inválida.' }));
+    res.end(JSON.stringify({ error: validation.error }));
     return;
   }
 
-  const lang: Language = VALID_LANGUAGES.has(language) ? language : 'pt';
+  const lang = validation.lang!;
+  const safeHistory = validation.safeHistory!;
   const languageInstruction = `\n🌐 Atenda EXCLUSIVAMENTE em ${LANGUAGE_NAMES[lang]}. Mesma personalidade e regras, apenas traduza a comunicação.`;
 
   try {
@@ -116,7 +145,7 @@ export default async function handler(req: IncomingMessage, res: ServerResponse)
     const chat = genAI.chats.create({
       model: 'gemini-flash-latest',
       config: { systemInstruction: SYSTEM_INSTRUCTION + languageInstruction },
-      history,
+      history: safeHistory,
     });
 
     res.writeHead(200, {
