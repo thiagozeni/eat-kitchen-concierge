@@ -390,13 +390,14 @@ export default function App() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const [ai, setAi] = useState<EatKitchenAI | null>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [pendingAction, setPendingAction] = useState<{ type: 'reset' } | { type: 'language'; lang: Language } | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const activeRequestRef = useRef(0);
+  const aiRef = useRef<EatKitchenAI | null>(null);
 
   useEffect(() => {
     document.title = "EAT+KITCHEN AI Concierge";
@@ -431,8 +432,15 @@ export default function App() {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  const cancelInFlightRequest = React.useCallback(() => {
+    activeRequestRef.current += 1;
+    aiRef.current?.cancelPendingRequest();
+    setIsLoading(false);
+  }, []);
+
   useEffect(() => {
-    setAi(new EatKitchenAI(language));
+    cancelInFlightRequest();
+    aiRef.current = new EatKitchenAI(language);
     setMessages([
       {
         id: crypto.randomUUID(),
@@ -440,7 +448,7 @@ export default function App() {
         content: t.greeting
       }
     ]);
-  }, [language]);
+  }, [language, t.greeting, cancelInFlightRequest]);
 
   const lastMessageRef = useRef<HTMLDivElement>(null);
 
@@ -453,7 +461,11 @@ export default function App() {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
 
   const handleSend = React.useCallback(async (text: string = input) => {
+    const ai = aiRef.current;
     if (!text.trim() || !ai || isLoading) return;
+
+    const requestId = activeRequestRef.current + 1;
+    activeRequestRef.current = requestId;
 
     const userMessage: Message = {
       id: crypto.randomUUID(),
@@ -472,6 +484,9 @@ export default function App() {
       let firstChunk = true;
 
       for await (const chunkText of stream) {
+        if (activeRequestRef.current !== requestId) {
+          return;
+        }
         if (chunkText) {
           fullContent += chunkText;
           if (firstChunk) {
@@ -487,6 +502,9 @@ export default function App() {
       }
 
       if (firstChunk) {
+        if (activeRequestRef.current !== requestId) {
+          return;
+        }
         setMessages(prev => [...prev, {
           id: streamId,
           role: 'assistant',
@@ -494,6 +512,12 @@ export default function App() {
         }]);
       }
     } catch (error) {
+      if (activeRequestRef.current !== requestId) {
+        return;
+      }
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        return;
+      }
       console.error('Error sending message:', error);
       setMessages(prev => [...prev, {
         id: crypto.randomUUID(),
@@ -501,12 +525,15 @@ export default function App() {
         content: 'Ops! Tive um erro de conexão. Vamos tentar de novo?'
       }]);
     } finally {
-      setIsLoading(false);
+      if (activeRequestRef.current === requestId) {
+        setIsLoading(false);
+      }
     }
-  }, [input, ai, isLoading]);
+  }, [input, isLoading]);
 
   const resetChat = () => {
-    setAi(new EatKitchenAI(language));
+    cancelInFlightRequest();
+    aiRef.current = new EatKitchenAI(language);
     setMessages([
       {
         id: crypto.randomUUID(),
@@ -535,6 +562,12 @@ export default function App() {
 
   const handleSendRef = useRef(handleSend);
   useEffect(() => { handleSendRef.current = handleSend; }, [handleSend]);
+
+  useEffect(() => {
+    return () => {
+      cancelInFlightRequest();
+    };
+  }, [cancelInFlightRequest]);
 
   const markdownComponents = React.useMemo(() => ({
     img: ({ node, ...props }: any) => {

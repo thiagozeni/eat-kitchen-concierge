@@ -16,18 +16,25 @@ const GREETINGS: Record<Language, string> = {
 export class EatKitchenAI {
   private history: HistoryEntry[];
   private language: Language;
+  private activeController: AbortController | null;
 
   constructor(language: Language = 'pt') {
     this.language = language;
+    this.activeController = null;
     this.history = [
       { role: 'model', parts: [{ text: GREETINGS[language] }] }
     ];
   }
 
   async *sendMessageStream(message: string): AsyncGenerator<string> {
+    this.activeController?.abort();
+    const controller = new AbortController();
+    this.activeController = controller;
+
     const response = await fetch('/api/chat/stream', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
+      signal: controller.signal,
       body: JSON.stringify({
         message,
         history: this.history,
@@ -70,6 +77,9 @@ export class EatKitchenAI {
       }
     } finally {
       reader.releaseLock();
+      if (this.activeController === controller) {
+        this.activeController = null;
+      }
     }
 
     if (assistantText) {
@@ -78,5 +88,10 @@ export class EatKitchenAI {
       // Sem resposta — remove a mensagem do usuário que adicionamos
       this.history.pop();
     }
+  }
+
+  cancelPendingRequest() {
+    this.activeController?.abort();
+    this.activeController = null;
   }
 }
