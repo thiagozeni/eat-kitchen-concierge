@@ -103,6 +103,8 @@ function validateRequest(message: unknown, history: unknown, language: unknown) 
   return { ok: true as const, lang: language as Language, safeHistory };
 }
 
+app.options('/api/chat/stream', (_req, res) => res.status(204).end());
+
 app.post('/api/chat/stream', async (req, res) => {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) {

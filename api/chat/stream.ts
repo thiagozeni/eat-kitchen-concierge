@@ -107,8 +107,30 @@ function validateRequest(message: unknown, history: unknown, language: unknown) 
 }
 
 export default async function handler(req: IncomingMessage, res: ServerResponse) {
+  const allowedOrigin = process.env.ALLOWED_ORIGIN;
+  const origin = req.headers['origin'];
+
+  if (req.method === 'OPTIONS') {
+    if (allowedOrigin && origin === allowedOrigin) {
+      res.writeHead(204, {
+        'Access-Control-Allow-Origin': allowedOrigin,
+        'Access-Control-Allow-Methods': 'POST',
+        'Access-Control-Allow-Headers': 'Content-Type',
+      }).end();
+    } else {
+      res.writeHead(204).end();
+    }
+    return;
+  }
+
   if (req.method !== 'POST') {
     res.writeHead(405).end();
+    return;
+  }
+
+  if (allowedOrigin && origin && origin !== allowedOrigin) {
+    res.writeHead(403, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify({ error: 'Origem não permitida.' }));
     return;
   }
 
