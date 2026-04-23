@@ -24,3 +24,7 @@ yarn-debug.log*
 .vscode/
 .idea/
 *.swp
+
+# Credentials
+service_account.json
+*.pem
